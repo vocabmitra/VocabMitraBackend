@@ -44,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(requestDto.getUsername())
                 .password(passwordEncoder.encode(requestDto.getPassword()))
                 .email(requestDto.getEmail())
-                .role(RoleType.ADMIN)
+                .role(RoleType.USER)
                 .build();
         Users savedUser = usersRepository.save(user);
         return modelMapper.map(savedUser, SignupResponseDto.class);
