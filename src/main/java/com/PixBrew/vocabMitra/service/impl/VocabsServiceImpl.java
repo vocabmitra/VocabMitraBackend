@@ -121,6 +121,7 @@ public class VocabsServiceImpl implements VocabsService {
 
                     case "message":
                         existingVocab.setMessage((String) value);
+                        break;
 
                     default:
                         throw new IllegalArgumentException("Invalid Field for updates: " + field);

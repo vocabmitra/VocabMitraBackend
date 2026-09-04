@@ -23,7 +23,6 @@ public class Vocabs {
     private String trick;
     private String meaning;
     private String example;
-    @Column(nullable = true)
     private String message;
     private LocalDateTime updatedAt;
 }
