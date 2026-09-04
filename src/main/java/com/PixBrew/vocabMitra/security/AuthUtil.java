@@ -15,7 +15,7 @@ import java.util.Date;
 @Component
 public class AuthUtil {
 
-    @Value("${jwt_secret-key}")
+    @Value("${jwt.secret}")
     private String jwtSecretKey;
 
     //creating a method to return the secret key and using hmacshakey for encoding the key
