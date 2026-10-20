@@ -1,5 +1,6 @@
 package com.PixBrew.vocabMitra.security;
 
+import com.PixBrew.vocabMitra.type.RoleType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,9 +47,10 @@ public class SecurityConfig {
                 .sessionManagement(sessionConfig -> sessionConfig
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/vocabs/public/**").permitAll()
-                        .requestMatchers("/user/**").hasRole("USER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/auth/**","/vocabs/public/**", "/test-payment.html").permitAll()
+                        .requestMatchers("/user/public/**", "/subscription/**").hasAnyRole(RoleType.USER.name(), RoleType.SUBSCRIBED_USER.name())
+                        .requestMatchers("/user/private/**", "/vocabs/private/**").hasRole(RoleType.SUBSCRIBED_USER.name())
+                        .requestMatchers("/admin/**").hasRole(RoleType.ADMIN.name())
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();

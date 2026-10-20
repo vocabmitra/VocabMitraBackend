@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @Builder
 @Getter
 @Setter
-//@ToString
 public class UserVocabProgressAndBookMarks {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

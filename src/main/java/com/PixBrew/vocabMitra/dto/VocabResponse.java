@@ -16,4 +16,5 @@ public class VocabResponse {
     private String example;
     private String message;
     private LocalDateTime updatedAt;
+    private Boolean isPremium;
 }

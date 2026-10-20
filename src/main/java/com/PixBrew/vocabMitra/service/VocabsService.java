@@ -1,5 +1,6 @@
 package com.PixBrew.vocabMitra.service;
 
+import com.PixBrew.vocabMitra.dto.HiddenFieldVocabResponseDto;
 import com.PixBrew.vocabMitra.dto.VocabAddRequest;
 import com.PixBrew.vocabMitra.dto.VocabCardResponseDto;
 import com.PixBrew.vocabMitra.dto.VocabResponse;
@@ -25,4 +26,6 @@ public interface VocabsService {
     List<VocabResponse> getVocabsByQuery(String qVocab);
 
     Page<VocabCardResponseDto> getVocabsByUseCaseTag(Authentication authentication, String useCaseTag, int page, int size, String sortBy);
+
+    List<HiddenFieldVocabResponseDto> publicGetVocabsByQuery(String query);
 }

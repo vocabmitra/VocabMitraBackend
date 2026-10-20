@@ -1,6 +1,7 @@
 package com.PixBrew.vocabMitra.service.impl;
 
 
+import com.PixBrew.vocabMitra.dto.HiddenFieldVocabResponseDto;
 import com.PixBrew.vocabMitra.dto.VocabAddRequest;
 import com.PixBrew.vocabMitra.dto.VocabCardResponseDto;
 import com.PixBrew.vocabMitra.dto.VocabResponse;
@@ -58,6 +59,7 @@ public class VocabsServiceImpl implements VocabsService {
                     .example(vocabAddRequest.getExample())
                     .useCaseTag(vocabAddRequest.getUseCaseTag().toUpperCase())
                     .message(vocabAddRequest.getMessage())
+                    .isPremium(vocabAddRequest.getIsPremium())
                     .build();
             Vocabs savedVocab = vocabsRepository.save(latestVocab);
             return modelMapper.map(savedVocab, VocabResponse.class);
@@ -121,6 +123,10 @@ public class VocabsServiceImpl implements VocabsService {
 
                     case "message":
                         existingVocab.setMessage((String) value);
+                        break;
+
+                    case "isPremium":
+                        existingVocab.setIsPremium((boolean) value);
                         break;
 
                     default:
@@ -206,7 +212,7 @@ public class VocabsServiceImpl implements VocabsService {
         // 1. Fetch the page of vocabs by tag
         Page<Vocabs> vocabsPage = vocabsRepository.findByExactTagInList(useCaseTag, pageable);
 
-        // 🔥 PRO-TIP: Prevent SQL Crashes!
+        // PRO-TIP: Prevent SQL Crashes!
         // If no words exist for this tag, return an empty page immediately.
         if (!vocabsPage.hasContent()) {
             return Page.empty(pageable); // Skips all the progress math!
@@ -243,5 +249,15 @@ public class VocabsServiceImpl implements VocabsService {
             }
             return vocabCardResponse;
         });
+    }
+
+    @Override
+    public List<HiddenFieldVocabResponseDto> publicGetVocabsByQuery(String query) {
+//        1. Finding matching vocabularies
+        List<Vocabs> similarVocabs = vocabsRepository.findByVocabContainingIgnoreCase(query);
+//        2. Mapping the vocabularies to HiddenVocabResponseDto
+        return similarVocabs.stream()
+                .map(vocab -> modelMapper.map(vocab, HiddenFieldVocabResponseDto.class))
+                .collect(Collectors.toList());
     }
 }

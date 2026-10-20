@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-//@RequiredArgsConstructor
 @Builder
 @Getter
 @Setter
@@ -50,6 +50,13 @@ public class Users implements UserDetails {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserVocabProgressAndBookMarks> userVocabProgressAndBookMarksList = new ArrayList<>();
+    // Tracks their active subscription window
+    private Instant subscriptionStartDate;
+    private Instant subscriptionEndDate;
+    // Maps the user to their payment history
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SubscriptionOrder> subscriptionOrders = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

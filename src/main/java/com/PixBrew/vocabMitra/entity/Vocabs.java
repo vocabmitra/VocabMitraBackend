@@ -3,6 +3,7 @@ package com.PixBrew.vocabMitra.entity;
 import com.PixBrew.vocabMitra.type.VocabType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.time.LocalDateTime;
 
@@ -25,4 +26,5 @@ public class Vocabs {
     private String example;
     private String message;
     private LocalDateTime updatedAt;
+    private Boolean isPremium;
 }

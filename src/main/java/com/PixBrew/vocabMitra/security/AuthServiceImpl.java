@@ -16,8 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -52,15 +51,40 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponseDto userLogin(LoginRequestDto loginRequestDto) {
-        //1 we will feed username and password to AuthenticationManager via Authentication.
-        //2AuthenticationManager will pass the data from daoAutheProvider and check is the username and password valid
+        // 1. Feed username and password to AuthenticationManager
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequestDto.getUsername(), loginRequestDto.getPassword())
         );
-        //3 after successful validation by daoAuthenticationProvider  we will now create the jwt token to pass to the session
+
+        // 2. Extract the successfully validated user
         Users users = (Users) authentication.getPrincipal();
+
+        // 3. --- LAZY ROLE DOWNGRADE CHECK ---
+        if (users.getRole() == RoleType.SUBSCRIBED_USER && users.getSubscriptionEndDate() != null) {
+            if (Instant.now().isAfter(users.getSubscriptionEndDate())) {
+                // Subscription has expired! Strip the premium role and reset dates
+                users.setRole(RoleType.USER);
+                users.setSubscriptionStartDate(null);
+                users.setSubscriptionEndDate(null);
+
+                // Save the downgraded user back to the database instantly
+                usersRepository.save(users);
+            }
+        }
+
+        // 4. Create the JWT token
+        // If the user was downgraded in step 3, authUtil will securely lock in the new "ROLE_USER" clearance!
         String jwtAccessToken = authUtil.createAccessToken(users);
-        return new LoginResponseDto(jwtAccessToken, users.getId(),users.getFirstName(), users.getLastName(), users.getUsername(), users.getEmail(), users.getRole());
+
+        return new LoginResponseDto(
+                jwtAccessToken,
+                users.getId(),
+                users.getFirstName(),
+                users.getLastName(),
+                users.getUsername(),
+                users.getEmail(),
+                users.getRole() // Returns the downgraded role to the frontend React app
+        );
     }
 
 

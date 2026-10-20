@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class UsersController {
     private final VocabsService vocabsService;
     private final UserVocabProgressBookMarkService userVocabProgressBookMarkService;
 
-    @GetMapping("/profile")
+    @GetMapping("/public/profile")
     public ResponseEntity<ProfileResponseDto> userProfile(@RequestParam(name = "userId")long id){
         try{
             return ResponseEntity.ok(usersService.loadUserProfile(id));
@@ -32,7 +33,7 @@ public class UsersController {
             throw new RuntimeException("exception in userProfile" + e.getMessage());
         }
     }
-    @PatchMapping("/update")
+    @PatchMapping("/public/update")
     public ResponseEntity<ProfileResponseDto> userUpdate(Authentication authentication,
                                                          @RequestBody Map<String, Object> updates) {
         try {
@@ -41,7 +42,7 @@ public class UsersController {
             throw new RuntimeException("exception in updateUser" + e.getMessage());
         }
     }
-    @DeleteMapping("/delete{id}")
+    @DeleteMapping("/public/delete{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable long id) {
         try {
             usersService.delete(id);
@@ -50,7 +51,7 @@ public class UsersController {
             throw new RuntimeException("Exception at DeleteUser" + e.getMessage());
         }
     }
-    @PostMapping("/bookmarkVocab")
+    @PostMapping("/public/bookmarkVocab")
     public ResponseEntity<String> bookmarkVocab(Authentication auth,
                                                 @RequestParam(name = "VocabId") Long vocabId){
         try {
@@ -61,7 +62,7 @@ public class UsersController {
         }
     }
 
-    @PostMapping("/markVocabIsLearned")
+    @PostMapping("/public/markVocabIsLearned")
     public ResponseEntity<String> markVocabIsLearned(Authentication auth,
                                                 @RequestParam(name = "VocabId") Long vocabId){
         try {
@@ -93,6 +94,7 @@ public class UsersController {
             throw new RuntimeException("exception in allLearnedVocabsByUser()" + e.getMessage());
         }
     }
+//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/private/filterVocab")
     public ResponseEntity<Page<VocabCardResponseDto>> filterVocabByUseCaseTag(
             Authentication authentication,
@@ -107,4 +109,6 @@ public class UsersController {
         };
         return ResponseEntity.ok(vocabsService.getVocabsByUseCaseTag(authentication, useCaseTag, page, size, sortBy));
     }
+
+//    method to filter through vocabulary type:: to be written below
 }

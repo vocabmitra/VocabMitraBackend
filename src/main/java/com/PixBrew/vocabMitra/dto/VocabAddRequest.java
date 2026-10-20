@@ -12,4 +12,5 @@ public class VocabAddRequest {
     private String meaning;
     private String example;
     private String message;
+    private Boolean isPremium;
 }
