@@ -26,7 +26,7 @@ public class SubscriptionOrderController {
     public ResponseEntity<SubscriptionResponseDto> createSubscriptionOrder(Authentication auth,
                                                                            @RequestBody SubscriptionRequestDto requestDto) {
         try{
-            System.out.println(requestDto.getDurationMonths());
+//            System.out.println(requestDto.getDurationMonths());
             SubscriptionResponseDto response = subscriptionOrderService.createSubscriptionOrder(auth, requestDto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(response);

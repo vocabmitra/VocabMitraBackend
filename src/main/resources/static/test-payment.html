@@ -23,10 +23,11 @@
     <input type="text" id="jwtToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5c...">
 
     <p>2. Select Plan:</p>
-    <select id="durationMonths">
-        <option value="1">1 Month (₹129)</option>
-        <option value="2">2 Months (₹248)</option>
-        <option value="3">3 Months (₹357)</option>
+    <!-- Updated to use Plan IDs matching your database -->
+    <select id="subscriptionPlanId">
+        <option value="1">1 Month Premium Pass (₹129)</option>
+        <option value="2">2 Months Premium Pass (₹248)</option>
+        <option value="3">3 Months Premium Pass (₹357)</option>
     </select>
 
     <button onclick="startPayment()">Pay with Razorpay</button>
@@ -41,7 +42,7 @@
 
     async function startPayment() {
         const token = document.getElementById('jwtToken').value;
-        const duration = document.getElementById('durationMonths').value;
+        const planId = document.getElementById('subscriptionPlanId').value;
         if (!token) return alert("Please paste your JWT Token first!");
 
         logMsg("1. Calling backend /subscription/create-order...");
@@ -54,7 +55,8 @@
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ durationMonths: parseInt(duration) })
+                // Updated to send subscriptionPlanId instead of durationMonths
+                body: JSON.stringify({ subscriptionPlanId: parseInt(planId) })
             });
 
             const orderData = await orderResponse.json();
@@ -63,33 +65,32 @@
 
             // STEP 2: Configure Razorpay Popup
             var options = {
-                "key": "rzp_test_SWHQq5Kq6JrLdD", // <-- REPLACE THIS!
+                "key": "rzp_test_SWHQq5Kq6JrLdD", // <-- REPLACE THIS WITH YOUR KEY!
                 "amount": orderData.amount,
                 "currency": orderData.currency,
                 "name": "VocabMitra",
-                "description": "Premium Subscription (" + duration + " Months)",
+                "description": "Premium Subscription (Plan ID: " + planId + ")",
                 "order_id": orderData.razorpayOrderId,
                 "handler": async function (response) {
                     logMsg("2. Payment Success! Received signature from Razorpay.");
                     logMsg("Payment ID: " + response.razorpay_payment_id);
 
                     // STEP 3: Send success details to backend for verification
-                    logMsg("3. Sending to /subscription/verify-payment...");
+logMsg("3. Sending to /subscription/verify-payment...");
 
-                    const verifyRes = await fetch('/subscription/verify-payment', {
-                        method: 'POST',
-                        headers: {
-                            // Important: Assuming your verify-payment does NOT need auth,
-                            // but if it does, add the Authorization header here too!
-                            'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            razorpayOrderId: response.razorpay_order_id,
-                            razorpayPaymentId: response.razorpay_payment_id,
-                            razorpaySignature: response.razorpay_signature
-                        })
-                    });
+const verifyRes = await fetch('/subscription/verify-payment', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        razorpayOrderId: response.razorpay_order_id,
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpaySignature: response.razorpay_signature,
+        subscriptionPlanId: parseInt(planId) // <--- Added this line
+    })
+});
 
                     const verifyData = await verifyRes.json();
                     if (verifyRes.ok) {

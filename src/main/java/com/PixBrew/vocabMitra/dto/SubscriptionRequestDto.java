@@ -1,5 +1,6 @@
 package com.PixBrew.vocabMitra.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,5 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SubscriptionRequestDto {
-    private int durationMonths; // ex:- 1,2,3.
+    @NotBlank
+    private long subscriptionPlanId;
 }

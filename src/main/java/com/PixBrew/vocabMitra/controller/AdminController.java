@@ -3,6 +3,7 @@ package com.PixBrew.vocabMitra.controller;
 import com.PixBrew.vocabMitra.dto.VocabAddRequest;
 import com.PixBrew.vocabMitra.dto.VocabResponse;
 import com.PixBrew.vocabMitra.service.VocabsService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class AdminController {
 
     //add new vocabulary
     @PostMapping("/addVocab")
-    public ResponseEntity<VocabResponse> addVocab(@RequestBody VocabAddRequest vocabAddRequest){
+    public ResponseEntity<VocabResponse> addVocab(@Valid @RequestBody VocabAddRequest vocabAddRequest){
         try{
             return ResponseEntity.status(HttpStatus.CREATED).body(vocabsService.addVocablary(vocabAddRequest));
         } catch (Exception e) {

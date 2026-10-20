@@ -8,4 +8,5 @@ public class SubscriptionPaymentVerificationDto {
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private String razorpaySignature;
+    private long subscriptionPlanId;
 }

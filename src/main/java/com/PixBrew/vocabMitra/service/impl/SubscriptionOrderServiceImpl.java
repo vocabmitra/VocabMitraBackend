@@ -4,8 +4,10 @@ import com.PixBrew.vocabMitra.dto.SubscriptionPaymentVerificationDto;
 import com.PixBrew.vocabMitra.dto.SubscriptionRequestDto;
 import com.PixBrew.vocabMitra.dto.SubscriptionResponseDto;
 import com.PixBrew.vocabMitra.entity.SubscriptionOrder;
+import com.PixBrew.vocabMitra.entity.SubscriptionPlans;
 import com.PixBrew.vocabMitra.entity.Users;
 import com.PixBrew.vocabMitra.repository.SubscriptionOrderRepo;
+import com.PixBrew.vocabMitra.repository.SubscriptionPlanRepo;
 import com.PixBrew.vocabMitra.repository.UsersRepository;
 import com.PixBrew.vocabMitra.security.AuthUtil;
 import com.PixBrew.vocabMitra.service.PaymentService;
@@ -16,6 +18,7 @@ import com.PixBrew.vocabMitra.type.RoleType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -29,14 +32,19 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
     private final UsersService usersService;
     private final UsersRepository usersRepository;
     private final AuthUtil authUtil;
+    private final SubscriptionPlanRepo subscriptionPlanRepo;
 
     @Override
+    @Transactional
     public SubscriptionResponseDto createSubscriptionOrder(Authentication auth, SubscriptionRequestDto request) throws Exception {
         String username = auth.getName();
         Users currentUser = usersRepository.findByUsername(username);
+        SubscriptionPlans selectedPlan = subscriptionPlanRepo.findById(request.getSubscriptionPlanId())
+                .orElseThrow(()-> new IllegalArgumentException("Plan dose not exit with id: " + request.getSubscriptionPlanId()));
 
-        int amountInRupees = calculatePrice(request.getDurationMonths());
-        int amountInPaise = amountInRupees * 100;
+        Double amountInRupees = selectedPlan.getPlanPrice();
+        int amountInPaise = (int) (amountInRupees * 100);
+        int durationMonths = selectedPlan.getDurationInMonths();
 
         // Delegate to the PaymentService
         String generatedOrderId = paymentService.createOrder(amountInPaise);
@@ -45,8 +53,8 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         SubscriptionOrder newOrder = SubscriptionOrder.builder()
                 .razorpayOrderId(generatedOrderId)
                 .status(OrderPaymentStatus.CREATED)
-                .durationMonths(request.getDurationMonths())
-                .amountPaid(amountInPaise)
+                .durationMonths(durationMonths)
+                .amountPaid((amountInPaise)/100)
                 .user(currentUser)
                 .build();
         orderRepository.save(newOrder);
@@ -59,6 +67,7 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
     }
 
     @Override
+    @Transactional
     public boolean verifyAndActivateSubscription(Authentication auth, SubscriptionPaymentVerificationDto paymentVerificationDto) {
         // 1. Verify cryptographic signature via PaymentService
         String orderId = paymentVerificationDto.getRazorpayOrderId();
@@ -102,19 +111,12 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
 
         user.setRole(RoleType.SUBSCRIBED_USER);
         usersRepository.save(user);
-
+        SubscriptionPlans boughtPlan = subscriptionPlanRepo.findById(paymentVerificationDto.getSubscriptionPlanId())
+                .orElseThrow(()-> new IllegalArgumentException("Plan Not found with provided id"));
+        long currentOrdersCount = boughtPlan.getOrderCount();
+        boughtPlan.setOrderCount(currentOrdersCount + 1);
+        subscriptionPlanRepo.save(boughtPlan);
         return true;
     }
-
-//    Helper method to count price as per month
-private int calculatePrice(int months) {
-    System.out.println(months);
-    return switch (months) {
-        case 1 -> 129;
-        case 2 -> 248;
-        case 3 -> 357;
-        default -> throw new IllegalArgumentException("Invalid subscription duration");
-    };
-}
 }
 

@@ -6,6 +6,7 @@ import com.PixBrew.vocabMitra.dto.SignupRequestDto;
 import com.PixBrew.vocabMitra.dto.SignupResponseDto;
 import com.PixBrew.vocabMitra.service.AuthService;
 import com.PixBrew.vocabMitra.service.UsersService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signUp")
-    public ResponseEntity<SignupResponseDto> signUp(@RequestBody SignupRequestDto requestDto) {
+    public ResponseEntity<SignupResponseDto> signUp(@Valid @RequestBody SignupRequestDto requestDto) {
         try{
             return ResponseEntity.status((HttpStatus.CREATED)).body(authService.userSignUp(requestDto));
         } catch (Exception e) {
@@ -30,7 +31,7 @@ public class AuthController {
         }
     }
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(authService.userLogin(loginRequestDto));
         } catch (Exception e) {
