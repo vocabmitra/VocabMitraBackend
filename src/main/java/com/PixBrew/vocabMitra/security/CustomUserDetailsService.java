@@ -1,5 +1,6 @@
 package com.PixBrew.vocabMitra.security;
 
+import com.PixBrew.vocabMitra.exception.RecordNotFoundException;
 import com.PixBrew.vocabMitra.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +16,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return usersRepository.findByUsername(username);
+        return usersRepository.findByUsername(username)
+                .orElseThrow(()-> new RecordNotFoundException("User Not Found with username: "
+                        + username));
     }
 }

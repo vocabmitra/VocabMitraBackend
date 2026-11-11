@@ -9,4 +9,5 @@ public class SubscriptionResponseDto {
     private String razorpayOrderId;
     private int amount; // in paise
     private String currency;
+    private String plan;
 }

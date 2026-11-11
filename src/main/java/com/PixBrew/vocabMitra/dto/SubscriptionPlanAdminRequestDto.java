@@ -9,12 +9,12 @@ import java.time.Instant;
 
 @Data
 public class SubscriptionPlanAdminRequestDto {
-    @NotBlank
+    @NotBlank(message = "Plan name cannot be blank.")
     private String planName;
-    @NotBlank
-    @Max(6)
+    @NotBlank(message = "Plan Duration cannot be blank.")
+    @Max(value = 6, message = "Plan duration cannot be more than 6 Months.")
     private int durationInMonths;
-    @NotBlank
-    @Min(100)
+    @NotBlank(message = "Subscription Plan Price cannot be blank.")
+    @Min(value = 100, message = "Subscription Plan Price cannot be less than 100(INR).")
     private double planPrice;
 }

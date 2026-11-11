@@ -2,6 +2,7 @@ package com.PixBrew.vocabMitra.service.impl;
 
 import com.PixBrew.vocabMitra.dto.ProfileResponseDto;
 import com.PixBrew.vocabMitra.entity.Users;
+import com.PixBrew.vocabMitra.exception.RecordNotFoundException;
 import com.PixBrew.vocabMitra.repository.UserVocabProgressAndBookMarkRepo;
 import com.PixBrew.vocabMitra.repository.UsersRepository;
 import com.PixBrew.vocabMitra.service.UsersService;
@@ -54,7 +55,9 @@ public class UsersServiceImpl implements UsersService {
     public ProfileResponseDto updateUserProfile(Authentication authentication, Map<String, Object> updates) {
         try {
             String username = authentication.getName();
-            Users user = usersRepository.findByUsername(username);
+            Users user = usersRepository.findByUsername(username)
+                    .orElseThrow(()-> new RecordNotFoundException("User Not Found with username: "
+                            + username));
             long userId = user.getId();
             Users users = usersRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User does not exist with id:  " + userId));
@@ -104,7 +107,9 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public Users findUserByUsername(String username) {
-        return usersRepository.findByUsername(username);
+        return usersRepository.findByUsername(username)
+                .orElseThrow(()-> new RecordNotFoundException("User Not Found with username: "
+                        + username));
     }
 
     @Override

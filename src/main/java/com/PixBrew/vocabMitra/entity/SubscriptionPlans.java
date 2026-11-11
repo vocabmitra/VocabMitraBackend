@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name ="subscription_plans")
@@ -33,4 +34,6 @@ public class SubscriptionPlans {
     private Instant updatedAt;
     @Column(nullable = false)
     private long updatedByAdmin;
+    @OneToMany(mappedBy = "plan")
+    private List<SubscriptionOrder> orders;
 }

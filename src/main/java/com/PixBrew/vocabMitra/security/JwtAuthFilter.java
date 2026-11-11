@@ -32,7 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = tokenHeader.split("Bearer ")[1];
         String username = authUtil.getUsernameFromToken(token);
         //now for filling the securityContextHolder we need to craete an Authentication Objects
-        // we will first create an UandPAythToken to pass to the Authentication parametrized constructor
+        // we will first create an uAndPAuthToken to pass to the Authentication parametrized constructor
         if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
             Users user = usersService.findUserByUsername(username);
             UsernamePasswordAuthenticationToken uAndPAuthToken =

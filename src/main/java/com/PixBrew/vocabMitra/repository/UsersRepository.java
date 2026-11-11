@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface UsersRepository extends JpaRepository<Users, Long> {
     boolean existsByUsernameAndEmail(String username, String email);
 
-    Users findByUsername(String username);
+   Optional<Users> findByUsername(String username);
 
     // The EntityGraph tells Hibernate to eagerly fetch the 'vocabProgresses'
     // list in a single SQL JOIN behind the scenes.

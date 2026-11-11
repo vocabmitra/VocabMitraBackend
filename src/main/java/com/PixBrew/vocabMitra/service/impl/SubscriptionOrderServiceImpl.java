@@ -6,6 +6,7 @@ import com.PixBrew.vocabMitra.dto.SubscriptionResponseDto;
 import com.PixBrew.vocabMitra.entity.SubscriptionOrder;
 import com.PixBrew.vocabMitra.entity.SubscriptionPlans;
 import com.PixBrew.vocabMitra.entity.Users;
+import com.PixBrew.vocabMitra.exception.RecordNotFoundException;
 import com.PixBrew.vocabMitra.repository.SubscriptionOrderRepo;
 import com.PixBrew.vocabMitra.repository.SubscriptionPlanRepo;
 import com.PixBrew.vocabMitra.repository.UsersRepository;
@@ -15,6 +16,7 @@ import com.PixBrew.vocabMitra.service.SubscriptionOrderService;
 import com.PixBrew.vocabMitra.service.UsersService;
 import com.PixBrew.vocabMitra.type.OrderPaymentStatus;
 import com.PixBrew.vocabMitra.type.RoleType;
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,37 +36,64 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
     private final UsersRepository usersRepository;
     private final AuthUtil authUtil;
     private final SubscriptionPlanRepo subscriptionPlanRepo;
+    private final SubscriptionOrderRepo subscriptionOrderRepo;
 
     @Override
     @Transactional
     public SubscriptionResponseDto createSubscriptionOrder(Authentication auth, SubscriptionRequestDto request) throws Exception {
         String username = auth.getName();
-        Users currentUser = usersRepository.findByUsername(username);
+        Users currentUser = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new RecordNotFoundException("User Not Found with username: " + username));
+
         SubscriptionPlans selectedPlan = subscriptionPlanRepo.findById(request.getSubscriptionPlanId())
-                .orElseThrow(()-> new IllegalArgumentException("Plan dose not exit with id: " + request.getSubscriptionPlanId()));
+                .orElseThrow(() -> new RecordNotFoundException("Plan does not exist with id: " + request.getSubscriptionPlanId()));
+
+        // SAFETY UPGRADE: Use findFirstBy... to prevent crashes if there are multiple abandoned clicks
+        Optional<SubscriptionOrder> alreadyPendingOrder = subscriptionOrderRepo
+                .findFirstByUserAndPlanAndStatusOrderByCreatedAtDesc(currentUser, selectedPlan, OrderPaymentStatus.CREATED);
+
+        if (alreadyPendingOrder.isPresent()) {
+            SubscriptionOrder pendingOrder = alreadyPendingOrder.get(); // Clean variable assignment
+
+            return SubscriptionResponseDto.builder()
+                    .razorpayOrderId(pendingOrder.getRazorpayOrderId())
+                    .plan(pendingOrder.getPlan().getPlanName())
+                    .amount(pendingOrder.getAmountPaid())
+                    .currency("INR")
+                    .build();
+        }
 
         Double amountInRupees = selectedPlan.getPlanPrice();
-        int amountInPaise = (int) (amountInRupees * 100);
+        // Use Math.round to prevent weird floating-point precision drops (e.g. 129.0 * 100 becoming 12899.999...)
+        int amountInPaise = (int) Math.round(amountInRupees * 100);
         int durationMonths = selectedPlan.getDurationInMonths();
 
         // Delegate to the PaymentService
+        try{
         String generatedOrderId = paymentService.createOrder(amountInPaise);
 
-        // Save state to your database
-        SubscriptionOrder newOrder = SubscriptionOrder.builder()
-                .razorpayOrderId(generatedOrderId)
-                .status(OrderPaymentStatus.CREATED)
-                .durationMonths(durationMonths)
-                .amountPaid((amountInPaise)/100)
-                .user(currentUser)
-                .build();
-        orderRepository.save(newOrder);
+            // Save state to your database
+            SubscriptionOrder newOrder = SubscriptionOrder.builder()
+                    .razorpayOrderId(generatedOrderId)
+                    .status(OrderPaymentStatus.CREATED)
+                    .durationMonths(durationMonths)
+                    .plan(selectedPlan)
+                    .amountPaid(amountInPaise / 100) // Storing Rupees
+                    .user(currentUser)
+                    .build();
 
-        return SubscriptionResponseDto.builder()
-                .razorpayOrderId(generatedOrderId)
-                .amount(amountInPaise)
-                .currency("INR")
-                .build();
+            // (Make sure your injected repo is consistently named! You used orderRepository here but subscriptionOrderRepo above)
+            subscriptionOrderRepo.save(newOrder);
+
+            return SubscriptionResponseDto.builder()
+                    .razorpayOrderId(generatedOrderId)
+                    .plan(selectedPlan.getPlanName())
+                    .amount(amountInPaise) // Returning Paise
+                    .currency("INR")
+                    .build();
+        } catch (RazorpayException e) {
+            throw new RazorpayException("Failed to initialize payment gateway: " + e.getMessage());
+        }
     }
 
     @Override

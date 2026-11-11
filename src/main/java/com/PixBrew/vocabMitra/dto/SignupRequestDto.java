@@ -14,16 +14,15 @@ import lombok.*;
 @NoArgsConstructor
 public class SignupRequestDto {
 
-    @NotBlank
+    @NotBlank(message = "First Name cannot be blank.")
     private String firstName;
-    @NotBlank
+    @NotBlank(message = "Last Name cannot be blank.")
     private String lastName;
-    @NotBlank
-    @Max(15)
+    @NotBlank(message = "We require username for authentication so it cannot be blank.")
     private String username;
-    @Email
+    @Email(message = "Please enter a valid email.")
     private String email;
-    @NotBlank
-    @Min(8)
+    @NotBlank(message = "Password cannot be blank.")
+    @Min(value = 8, message = "Password must contain minimum 8 characters.")
     private String password;
 }

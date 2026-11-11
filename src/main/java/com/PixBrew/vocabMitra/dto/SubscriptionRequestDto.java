@@ -9,6 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SubscriptionRequestDto {
-    @NotBlank
+    @NotBlank(message = "Subscription Plan Id cannot be blank.")
     private long subscriptionPlanId;
 }

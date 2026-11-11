@@ -44,6 +44,10 @@ public class SubscriptionOrder {
     // Amount stored in subunits (Paise) as per Razorpay standards
     private int amountPaid;
 
+    @ManyToOne
+    @JoinColumn(name = "subscription_plan_id", nullable = false)
+    private SubscriptionPlans plan;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
