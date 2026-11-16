@@ -76,7 +76,7 @@ public class VocabsServiceImpl implements VocabsService {
 //            2. fetch the vocabs from repository
             Page<Vocabs> vocabsPage = vocabsRepository.findAll(pageable);
 //            3. map the page of entities into page of DTO
-            return vocabsPage.map(vocabs -> modelMapper.map(vocabs, VocabResponse.class));
+            return vocabsPage.map(vocab -> modelMapper.map(vocab, VocabResponse.class));
         }catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
